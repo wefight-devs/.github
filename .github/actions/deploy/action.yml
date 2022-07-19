@@ -1,0 +1,56 @@
+name: 'Deploy'
+description: 'Deploy'
+
+inputs:
+  environment:
+    required: true
+    description: "Environment"
+
+runs:
+  using: "composite"
+  steps:
+    # Checkout project
+    - uses: actions/checkout@v3
+      with:
+        path: main
+
+    # Setup buildx
+    - name: "Buildx"
+      shell: bash
+      run: docker buildx create --use
+
+    # Build dev
+    - name: "Build development"
+      if: ${{ inputs.environment == 'development' }}
+      shell: bash
+      run: |
+        docker buildx build \
+        -t ${{ env.IMAGE_TAG }}-dev \
+        --platform=linux/amd64 \
+        --target=${{ env.DOCKER_BUILD_TARGET }} \
+        --cache-to=${{ env.IMAGE_TAG }}-dev \
+        --push main
+
+    # Build staging
+    - name: "Build staging"
+      if: ${{ inputs.environment == 'staging' }}
+      shell: bash
+      run: |
+        docker buildx build \
+        --cache-from=${{ env.IMAGE_TAG }}-dev \
+        -t ${{ env.IMAGE_TAG }}-staging \
+        --platform=linux/amd64 \
+        --target=${{ env.DOCKER_BUILD_TARGET }} \
+        --push main
+
+    # Build production
+    - name: "Build production"
+      if: ${{ inputs.environment == 'production' }}
+      shell: bash
+      run: |
+        docker buildx build \
+        --cache-from=${{ env.IMAGE_TAG }}-dev \
+        -t ${{ env.IMAGE_TAG }} \
+        --platform=linux/amd64 \
+        --target=${{ env.DOCKER_BUILD_TARGET }} \
+        --push main
