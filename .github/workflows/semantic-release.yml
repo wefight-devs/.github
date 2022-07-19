@@ -1,0 +1,52 @@
+name: Reusable semantic-release workflow
+
+on:
+  workflow_call:
+    inputs:
+      teamsGroup:
+        required: true
+        type: string
+        description: Group for TEAMS notification
+
+      dryRun:
+        required: false
+        default: false
+        type: boolean
+        description: Should run on dry-run mode
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+      TEAMS_WEBHOOK_SECRET_KEY: ${{inputs.teamsGroup}}_TEAMS_WEBHOOK_URL
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          cache: npm
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@wefight-devs'
+
+      - name: npm install
+        run: npm ci
+
+      # Generate semver 
+      - name: Semantic Release dry run
+        if: inputs.dryRun == true
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets[env.TEAMS_WEBHOOK_SECRET_KEY] }}
+        run: GITHUB_EVENT_NAME="push" GITHUB_REF="main" npx semantic-release --dry-run
+
+      - name: Semantic Release
+        if: inputs.dryRun == false
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets[env.TEAMS_WEBHOOK_SECRET_KEY] }}
+        run: GITHUB_EVENT_NAME="push" npx semantic-release

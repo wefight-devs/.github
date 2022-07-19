@@ -1,0 +1,67 @@
+name: Reusable deploy workflow for development, staging and production
+
+on:
+  workflow_call:
+    inputs:
+      semverTagName:
+        description: 'A tag name passed from the caller workflow'
+        required: true
+        type: string
+
+      imageName:
+        description: 'An image name passed from the caller workflow'
+        required: true
+        type: string
+      
+      loginServer:
+        required: false
+        type: string
+        description: "Login server"
+        default: wefight2.azurecr.io
+
+      buildTarget:
+        required: false
+        type: string
+        description: "Build target"
+        default: prod
+
+env:
+  IMAGE_TAG: ${{ inputs.loginServer }}/${{ inputs.imageName }}:${{ inputs.semverTagName }}
+  ACR_LOGIN_SERVER: ${{ inputs.loginServer }}
+  DOCKER_BUILD_TARGET: ${{ inputs.buildTarget }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # For each environments
+    strategy:
+      matrix:
+        include:
+          - environment: development
+          - environment: staging
+          - environment: production
+
+    environment: ${{ matrix.environment }}
+
+    steps:
+      # Checkout custom deploy actions
+      - uses: actions/checkout@v3
+        with:
+          repository: 'wefight-devs/.github'
+          fetch-depth: 0
+          path: 'common-actions'
+          ref: main
+
+      # Login to ACR
+      - name: "Azure ACR login"
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_REGISTRY_USERNAME }}
+          password: ${{ secrets.ACR_REGISTRY_PASSWORD }}
+
+      # Run custom action for environment
+      - name: "Deploy to environment"
+        uses: "./common-actions/.github/actions/deploy"
+        with:
+          environment: ${{ matrix.environment }}
