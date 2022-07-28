@@ -52,7 +52,7 @@ jobs:
           repository: 'wefight-devs/.github'
           fetch-depth: 0
           path: 'common-actions'
-          ref: main
+          ref: v1.0.1
 
       # Login to ACR
       - name: "Azure ACR login"
