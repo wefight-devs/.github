@@ -53,7 +53,7 @@ runs:
       if: ${{ inputs.environment == 'production' }}
       shell: bash
       run: |
-        curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ github.token }}" "${{ github.api_url }}/repos/wefight-devs/kubernetes-resources/actions/workflows/trigger_new_tag.yml/dispatches" -d '{"ref":"master","inputs":{"environment":"production", "imageName":"${{ env.IMAGE_NAME }}", "imageTag": "${{ env.IMAGE_TAG }}"}}'
+        curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ inputs.ARTIFACT_TOKEN }}" "${{ github.api_url }}/repos/wefight-devs/kubernetes-resources/actions/workflows/trigger_new_tag.yml/dispatches" -d '{"ref":"master","inputs":{"environment":"production", "imageName":"${{ env.IMAGE_NAME }}", "imageTag": "${{ env.IMAGE_TAG }}"}}'
       # docker buildx build \
       # --cache-from=${{ env.IMAGE_REF }}-dev \
       # --build-arg ARTIFACT_TOKEN=${{ inputs.ARTIFACT_TOKEN }} \
