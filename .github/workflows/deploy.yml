@@ -26,7 +26,9 @@ on:
         default: prod
 
 env:
-  IMAGE_TAG: ${{ inputs.loginServer }}/${{ inputs.imageName }}:${{ inputs.semverTagName }}
+  IMAGE_REF: ${{ inputs.loginServer }}/${{ inputs.imageName }}:${{ inputs.semverTagName }}
+  IMAGE_NAME: ${{ inputs.imageName }}
+  IMAGE_TAG: ${{ inputs.semverTagName }}
   ACR_LOGIN_SERVER: ${{ inputs.loginServer }}
   DOCKER_BUILD_TARGET: ${{ inputs.buildTarget }}
 
@@ -65,3 +67,4 @@ jobs:
         uses: "./common-actions/.github/actions/deploy"
         with:
           environment: ${{ matrix.environment }}
+          ARTIFACT_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}

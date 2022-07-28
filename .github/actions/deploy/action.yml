@@ -5,6 +5,9 @@ inputs:
   environment:
     required: true
     description: "Environment"
+  ARTIFACT_TOKEN:
+    required: true
+    description: "Artifact token"
 
 runs:
   using: "composite"
@@ -25,10 +28,10 @@ runs:
       shell: bash
       run: |
         docker buildx build \
-        -t ${{ env.IMAGE_TAG }}-dev \
+        -t ${{ env.IMAGE_REF }} \
+        --build-arg ARTIFACT_TOKEN=${{ inputs.ARTIFACT_TOKEN }} \
         --platform=linux/amd64 \
         --target=${{ env.DOCKER_BUILD_TARGET }} \
-        --cache-to=${{ env.IMAGE_TAG }}-dev \
         --push main
 
     # Build staging
@@ -36,21 +39,26 @@ runs:
       if: ${{ inputs.environment == 'staging' }}
       shell: bash
       run: |
-        docker buildx build \
-        --cache-from=${{ env.IMAGE_TAG }}-dev \
-        -t ${{ env.IMAGE_TAG }}-staging \
-        --platform=linux/amd64 \
-        --target=${{ env.DOCKER_BUILD_TARGET }} \
-        --push main
+        echo "Do nothing for the moment"
+      # docker buildx build \
+      # --cache-from=${{ env.IMAGE_REF }} \
+      # --build-arg ARTIFACT_TOKEN=${{ inputs.ARTIFACT_TOKEN }} \
+      # -t ${{ env.IMAGE_REF }}-staging \
+      # --platform=linux/amd64 \
+      # --target=${{ env.DOCKER_BUILD_TARGET }} \
+      # --push main
 
     # Build production
     - name: "Build production"
       if: ${{ inputs.environment == 'production' }}
       shell: bash
       run: |
-        docker buildx build \
-        --cache-from=${{ env.IMAGE_TAG }}-dev \
-        -t ${{ env.IMAGE_TAG }} \
-        --platform=linux/amd64 \
-        --target=${{ env.DOCKER_BUILD_TARGET }} \
-        --push main
+        echo "Trigger a PR on kubernetes-resources"
+        echo "Do nothing for the moment"
+      # docker buildx build \
+      # --cache-from=${{ env.IMAGE_REF }}-dev \
+      # --build-arg ARTIFACT_TOKEN=${{ inputs.ARTIFACT_TOKEN }} \
+      # -t ${{ env.IMAGE_REF }} \
+      # --platform=linux/amd64 \
+      # --target=${{ env.DOCKER_BUILD_TARGET }} \
+      # --push main
