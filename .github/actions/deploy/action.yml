@@ -34,8 +34,8 @@ runs:
         --target=${{ env.DOCKER_BUILD_TARGET }} \
         --push main
 
-        docker tag ${{ env.IMAGE_REF }} ${{env.ACR_LOGIN_SERVER}/${{env.IMAGE_NAME}}:beta
-        docker push ${{env.ACR_LOGIN_SERVER}/${{env.IMAGE_NAME}}:beta
+        docker tag ${{ env.IMAGE_REF }} ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:beta
+        docker push ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:beta
 
     # Build staging
     - name: "Build staging"
@@ -59,8 +59,8 @@ runs:
         docker pull ${{ env.IMAGE_REF }}
 
         defaultBranch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
-        docker tag ${{ env.IMAGE_REF }} ${{env.ACR_LOGIN_SERVER}/${{env.IMAGE_NAME}}:$defaultBranch
-        docker push ${{env.ACR_LOGIN_SERVER}/${{env.IMAGE_NAME}}:$defaultBranch
+        docker tag ${{ env.IMAGE_REF }} ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:$defaultBranch
+        docker push ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:$defaultBranch
       # docker buildx build \
       # --cache-from=${{ env.IMAGE_REF }}-dev \
       # --build-arg ARTIFACT_TOKEN=${{ inputs.ARTIFACT_TOKEN }} \
