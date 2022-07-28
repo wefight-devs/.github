@@ -36,8 +36,9 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@wefight-devs'
 
-      - name: npm install
-        run: npm ci
+      - name: npm install semantic-release
+        run: |
+          npm install semantic-release @semantic-release/exec @semantic-release/git @semantic-release/changelog
 
       # Generate semver 
       - name: Semantic Release dry run
