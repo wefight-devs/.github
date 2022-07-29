@@ -22,6 +22,7 @@ jobs:
       ARTIFACT_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
       GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
       TEAMS_WEBHOOK_SECRET_KEY: ${{inputs.teamsGroup}}_TEAMS_WEBHOOK_URL
+      HUSKY: 0
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
