@@ -1,0 +1,51 @@
+name: 'Terraform validation'
+description: 'Terraform validation'
+
+inputs:
+  terraform_version:
+    required: false
+    description: "Terraform version"
+    default: 1.2.5
+
+runs:
+  using: "composite"
+  steps:
+    - name: Clone repo
+      uses: actions/checkout@v3
+      with:
+        path: main
+
+    - name: Setup terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: ${{ inputs.terraform_version }}
+
+    - name: Run terraform fmt check
+      id: fmt
+      shell: bash
+      working-directory: main
+      run: terraform fmt -check -diff
+
+    - name: Run TFSec
+      uses: aquasecurity/tfsec-action@v1.0.0
+      with:
+        working_directory: main
+
+    - name: Run Checkov
+      id: checkov
+      uses: bridgecrewio/checkov-action@master
+      with:
+        directory: main
+        framework: terraform
+        quiet: true
+        output_format: github_failed_only
+
+    - name: Run terrascan
+      id: terrascan
+      shell: bash
+      working-directory: main
+      run: |
+        curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
+        tar -xf terrascan.tar.gz terrascan && rm terrascan.tar.gz
+        install terrascan /usr/local/bin && rm terrascan
+        terrascan scan -i terraform
