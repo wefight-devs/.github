@@ -18,8 +18,8 @@ jobs:
   run:
     runs-on: ubuntu-latest
     env:
-      NPM_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
-      ARTIFACT_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+      PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+      ARTIFACT_TOKEN: ${{ secrets.ARTIFACT_TOKEN }}
       GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
       TEAMS_WEBHOOK_SECRET_KEY: ${{inputs.teamsGroup}}_TEAMS_WEBHOOK_URL
       HUSKY: 0
