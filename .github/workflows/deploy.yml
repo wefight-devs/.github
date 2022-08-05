@@ -67,4 +67,5 @@ jobs:
         uses: "./common-actions/.github/actions/deploy"
         with:
           environment: ${{ matrix.environment }}
-          ARTIFACT_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+          ARTIFACT_TOKEN: ${{ secrets.ARTIFACT_TOKEN }}
+          PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}

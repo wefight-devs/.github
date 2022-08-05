@@ -7,7 +7,10 @@ inputs:
     description: "Environment"
   ARTIFACT_TOKEN:
     required: true
-    description: "Artifact token"
+    description: "Azure artifact token"
+  PACKAGES_GITHUB_TOKEN:
+    required: true
+    description: "Packages github token"
 
 runs:
   using: "composite"
@@ -30,6 +33,7 @@ runs:
         docker build \
         -t ${{ env.IMAGE_REF }} \
         --build-arg ARTIFACT_TOKEN=${{ inputs.ARTIFACT_TOKEN }} \
+        --build-arg PACKAGES_GITHUB_TOKEN=${{ inputs.PACKAGES_GITHUB_TOKEN }} \
         --platform=linux/amd64 \
         --target=${{ env.DOCKER_BUILD_TARGET }} \
         main
