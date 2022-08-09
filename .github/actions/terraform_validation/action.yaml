@@ -7,6 +7,11 @@ inputs:
     description: "Terraform version"
     default: 1.2.5
 
+  working-directory:
+    required: false
+    description: "Working directory to get"
+    default: "."
+
 runs:
   using: "composite"
   steps:
@@ -23,19 +28,19 @@ runs:
     - name: Run terraform fmt check
       id: fmt
       shell: bash
-      working-directory: main
+      working-directory: main/{{ inputs.working-directory }}
       run: terraform fmt -check -diff
 
     - name: Run TFSec
       uses: aquasecurity/tfsec-action@v1.0.0
       with:
-        working_directory: main
+        working_directory: main/{{ inputs.working-directory }}
 
     - name: Run Checkov
       id: checkov
       uses: bridgecrewio/checkov-action@master
       with:
-        directory: main
+        directory: main/{{ inputs.working-directory }}
         framework: terraform
         quiet: true
         output_format: github_failed_only
@@ -43,7 +48,7 @@ runs:
     - name: Run terrascan
       id: terrascan
       shell: bash
-      working-directory: main
+      working-directory: main/{{ inputs.working-directory }}
       run: |
         curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
         tar -xf terrascan.tar.gz terrascan && rm terrascan.tar.gz
