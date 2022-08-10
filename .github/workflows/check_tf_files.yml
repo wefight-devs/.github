@@ -115,7 +115,7 @@ jobs:
         with:
           file: main/${{ inputs.working-directory }}/tfplan.json 
           quiet: true 
-          soft_fail: true 
+          soft_fail: false 
           framework: terraform 
           output_format: github_failed_only 
           download_external_modules: true 
@@ -127,4 +127,4 @@ jobs:
           curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
           tar -xf terrascan.tar.gz terrascan && rm terrascan.tar.gz
           install terrascan /usr/local/bin && rm terrascan
-          terrascan scan -i tfplan -f tfplan.binary
+          terrascan scan -i tfplan -f tfplan.json
