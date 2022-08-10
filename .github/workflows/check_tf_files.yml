@@ -23,6 +23,7 @@ on:
 
 jobs:
   check_format_tfsec:
+    name: Check format and TFSec
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
@@ -45,6 +46,7 @@ jobs:
           working_directory: main/${{ inputs.working-directory }}
 
   checkov_terrascan:
+    name: Run checkov and terrascan
     needs: check_format_tfsec
     runs-on: ubuntu-latest
     env:
