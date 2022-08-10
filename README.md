@@ -9,13 +9,15 @@ For example, if your .releaserc.json use the @semantic-release/npm plugin, this 
 
 ### deploy.yml
 
-The deploy.yml is designed to be called on new release published. Because it build your Dockerfile:
+The deploy.yml reusable workflow is designed to be called on new release published. 
+
+It build your Dockerfile:
 
 - with same tag as your published release
 - on platform linux/amd64
 - with args ARTIFACT_TOKEN (for Azure registry) and PACKAGES_GITHUB_TOKEN (for Github registry)
-- on specific target buildTarget
+- on specific target
 
 Once the container built, the workflow push it to the Azure ACR, and push a copy with the tag “beta”.
 
-When the production is reviewed, the deploy.yaml reusable workflow only push a new image with tag “master” or “main” (depending on your main branch.
+When the image is ready for production, this workflow only push a new image with tag “master” or “main” (depending on your main branch).
