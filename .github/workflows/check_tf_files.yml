@@ -105,6 +105,7 @@ jobs:
           terraform plan \
             --var-file ./platforms/common.tfvars \
             --var-file ./platforms/${{ inputs.workspace }}/terraform.tfvars \
+            --lock-timeout 5m \
             --out tfplan.binary
           terraform show -json tfplan.binary > tfplan.json
 
@@ -126,4 +127,4 @@ jobs:
           curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
           tar -xf terrascan.tar.gz terrascan && rm terrascan.tar.gz
           install terrascan /usr/local/bin && rm terrascan
-          terrascan scan -i terraform -–non-recursive
+          terrascan scan -i terraform -f tfplan.json
