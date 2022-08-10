@@ -80,7 +80,7 @@ jobs:
         run: |
             mkdir -p /home/runner/.ssh
             cat <<EOT >> /home/runner/.ssh/github_actions
-            ${{ secrets.INFRASTRUCTURE_LIVE_SSH_KEY }}
+            ${{ secrets.TERRAFORM_GITHUB_SSH_KEY }}
             EOT
             chmod 600 /home/runner/.ssh/github_actions
             ssh-agent -a $SSH_AUTH_SOCK > /dev/null   
