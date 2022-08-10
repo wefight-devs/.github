@@ -69,3 +69,4 @@ jobs:
           environment: ${{ matrix.environment }}
           ARTIFACT_TOKEN: ${{ secrets.ARTIFACT_TOKEN }}
           PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+          AZURE_TOKEN: ${{ secrets.AZURE_TOKEN }}
