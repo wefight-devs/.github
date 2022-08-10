@@ -4,33 +4,13 @@ description: 'Terraform validation'
 inputs:
   terraform_version:
     required: false
-    description: "Set terraform version"
+    description: "Terraform version"
     default: 1.2.5
-  workspace:
-    required: false
-    description: "Terraform workspace for plan"
-    default: vik-dev_fr
+
   working-directory:
     required: false
-    description: "Working directory to test"
+    description: "Working directory to get"
     default: "."
-
-  ssh-key:
-    required: false
-    description: "SSH key for downloading private external modules"
-
-  arm-client-id:
-    required: true
-    description: 'Azure '
-  arm-client-secret:
-    required: true
-    description: 'Azure'
-  arm-subscription-id:
-    required: true
-    description: 'Azure'
-  arm-tenant-id:
-    required: true
-    description: 'Azure'
 
 runs:
   using: "composite"
@@ -52,76 +32,25 @@ runs:
       run: terraform fmt -check -diff
 
     - name: Run TFSec
-      if: success()
       uses: aquasecurity/tfsec-action@v1.0.0
       with:
         working_directory: main/${{ inputs.working-directory }}
 
-    - name: Add SSH key
-      shell: bash
-      if: ${{ inputs.ssh-key }} && success()
-      env:
-        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-      run: |
-          mkdir -p /home/runner/.ssh
-          # Replace example.com with the hostname of the machine
-          # you're SSH-ing into
-          # ssh-keyscan example.com >> /home/runner/.ssh/known_hosts
-          cat <<EOT >> /home/runner/.ssh/github_actions
-          ${{ inputs.ssh-key }}
-          EOT
-          chmod 600 /home/runner/.ssh/github_actions
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null   
-          ssh-add /home/runner/.ssh/github_actions
-
-    - name: Login to Azure
-      uses: Azure/login@v1
-      with:
-        creds: '{"clientId":"${{ inputs.arm-client-id }}","clientSecret":"${{ inputs.arm-client-secret }}","subscriptionId":"${{ inputs.arm-subscription-id }}","tenantId":"${{ inputs.arm-tenant-id }}"}'
-
     - name: Run Checkov
       id: checkov
-      if: success()
-      shell: bash
-      working-directory: main/${{ inputs.working-directory }}
-      env:
-        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        ARM_CLIENT_ID: ${{ inputs.arm-client-id }}
-        ARM_CLIENT_SECRET: ${{ inputs.arm-client-secret }}
-        ARM_SUBSCRIPTION_ID: ${{ inputs.arm-subscription-id }}
-        ARM_TENANT_ID: ${{ inputs.arm-tenant-id }}
-      run: |
-        sudo apt-get update > /dev/null
-        sudo apt-get install software-properties-common > /dev/null
-        sudo add-apt-repository ppa:deadsnakes/ppa > /dev/null
-        sudo apt-get install python3.7 > /dev/null
-        sudo apt-get install python3-pip > /dev/null
-        sudo apt-get install python3.7-distutils > /dev/null
-        sudo python3.7 -m pip install -U checkov > /dev/null
-
-        terraform init
-        terraform workspace select ${{ inputs.workspace }}
-        terraform plan \
-          --var-file ./platforms/common.tfvars \
-          --var-file ./platforms/${{ inputs.workspace }}/terraform.tfvars \
-          --out tfplan.binary
-        terraform show -json tfplan.binary > tfplan.json
-
-        checkov -f tfplan.json
-        # checkov \
-        #   --framework terraform \
-        #   --directory . \
-        #   --download-external-modules true
+      uses: bridgecrewio/checkov-action@master
+      with:
+        directory: main/${{ inputs.working-directory }}
+        framework: terraform
+        quiet: true
+        output_format: github_failed_only
 
     - name: Run terrascan
       id: terrascan
-      if: success()
       shell: bash
       working-directory: main/${{ inputs.working-directory }}
-      env:
-        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       run: |
         curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
         tar -xf terrascan.tar.gz terrascan && rm terrascan.tar.gz
         install terrascan /usr/local/bin && rm terrascan
-        terrascan scan -i terraform -–non-recursive
+        terrascan scan -i terraform
