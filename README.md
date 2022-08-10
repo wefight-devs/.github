@@ -8,9 +8,15 @@ The semantic-release.yml reusable workflow just take your `.releaserc.json` file
 
 For example, if your `.releaserc.json` use the `@semantic-release/npm` plugin, this workflow automatically publish your package on the private Github registry.
 
+| Input      | Description                  | Required | Default |
+| ---------- | ---------------------------- | -------- | ------- |
+| teamsGroup | Group for TEAMS notification | true     | /       |
+| dryRun     | Should run on dry-run mode   | false    | false   |
+| cache      | "NodeJS Cache"               | false    | ''      |
+
 ### deploy.yml
 
-The deploy.yml reusable workflow is designed to be called on new release published. 
+The deploy.yml reusable workflow is designed to be called on new release published.
 
 It build your `Dockerfile`:
 
@@ -22,3 +28,10 @@ It build your `Dockerfile`:
 Once the container built, the workflow push it to the Azure ACR, and push a copy with the tag “beta”.
 
 When the image is ready for production, this workflow only push a new image with tag “master” or “main” (depending on your main branch).
+
+| Input         | Description                     | Required | Default               |
+| ------------- | ------------------------------- | -------- | --------------------- |
+| imageName     | Image name for your container   | true     | /                     |
+| semverTagName | Tag name for your container     | true     | /                     |
+| loginServer   | Azure ACR login server          | false    | 'wefight2.azurecr.io' |
+| buildTarget   | Build target of your Dockerfile | false    | 'prod'                |
