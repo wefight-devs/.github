@@ -12,11 +12,11 @@ For example, if your `.releaserc.json` use the `@semantic-release/npm` plugin, t
 
 The deploy.yml reusable workflow is designed to be called on new release published. 
 
-It build your Dockerfile:
+It build your `Dockerfile`:
 
 - with same tag as your published release
 - on platform linux/amd64
-- with args ARTIFACT_TOKEN (for Azure registry) and PACKAGES_GITHUB_TOKEN (for Github registry)
+- with args ARTIFACT_TOKEN (for Azure npm registry), PACKAGES_GITHUB_TOKEN (for Github npm registry) and AZURE_TOKEN (for python)
 - on specific target
 
 Once the container built, the workflow push it to the Azure ACR, and push a copy with the tag “beta”.
