@@ -16,7 +16,7 @@ It build your `Dockerfile`:
 
 - with same tag as your published release
 - on platform linux/amd64
-- with args ARTIFACT_TOKEN (for Azure npm registry), PACKAGES_GITHUB_TOKEN (for Github npm registry) and AZURE_TOKEN (for python)
+- with args ARTIFACT_TOKEN (for Azure npm registry), PACKAGES_GITHUB_TOKEN (for Github npm registry) and AZURE_TOKEN (for python). Each of these variables are set on the organization secrets, so you don't need to set them on your repository secrets.
 - on specific target
 
 Once the container built, the workflow push it to the Azure ACR, and push a copy with the tag “beta”.
