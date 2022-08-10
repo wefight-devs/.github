@@ -4,8 +4,9 @@
 
 ### semantic-release.yml
 
-The semantic-release.yml reusable workflow just take your .releaserc.json file and run a npx semantic-releaseon it.
-For example, if your .releaserc.json use the @semantic-release/npm plugin, this workflow publish automatically publish your package on the private Github registry.
+The semantic-release.yml reusable workflow just take your `.releaserc.json` file and run a npx semantic-releaseon it.
+
+For example, if your `.releaserc.json` use the `@semantic-release/npm` plugin, this workflow automatically publish your package on the private Github registry.
 
 ### deploy.yml
 
