@@ -113,10 +113,11 @@ jobs:
       - name: Run terrascan
         working-directory: main/${{ inputs.working-directory }}
         run: |
-          curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
-          tar -xf terrascan.tar.gz terrascan && rm terrascan.tar.gz
-          install terrascan /usr/local/bin && rm terrascan
-          terrascan scan -i tfplan -f tfplan.json
+          docker run -v `pwd`:`pwd` -w `pwd` tenable/terrascan scan -i tfplan -f tfplan.json . 
+          # curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
+          # tar -xf terrascan.tar.gz terrascan && rm terrascan.tar.gz
+          # install terrascan /usr/local/bin && rm terrascan
+          # terrascan scan -i tfplan -f tfplan.json
 
       # Checkov the tfplan.json file
       - name: Checkov
