@@ -1,0 +1,41 @@
+name: Reusable tests with pytest workflow
+
+on:
+  workflow_call:
+    inputs:
+      pythonVersion:
+        description: 'The version of python of the project'
+        required: false
+        default: '3.10'
+        type: string
+
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: "Set up python and pip"
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.pythonVersion }}
+
+      - name: "Install poetry and packages"
+        run: |
+          pip install --upgrade pip
+          pip install poetry
+          poetry install
+
+      - name: "Run pytest"
+        run: |
+          poetry run pytest tests -v --junitxml=reports/results.xml --cov-report=xml:reports/coverage.xml --cov=.
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io

@@ -1,0 +1,40 @@
+name: Reusable python package publisher workflow
+
+on:
+  workflow_call:
+    inputs:
+      pythonVersion:
+        description: 'The version of python of the project'
+        required: false
+        default: '3.10'
+        type: string
+
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: "Set up python and pip"
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.pythonVersion }}
+
+      - name: "Install poetry and packages"
+        run: |
+          pip install --upgrade pip
+          pip install poetry
+          poetry install
+
+      - name: "Package library"
+        run: |
+          poetry build
+
+      - name: "Publish library"
+        run: |
+          poetry config repositories.wefight https://pkgs.dev.azure.com/vikwefight/_packaging/Wefight/pypi/upload
+          poetry publish -r wefight -u a -p ${{ secrets.AZURE_TOKEN }}
+          exit 0
