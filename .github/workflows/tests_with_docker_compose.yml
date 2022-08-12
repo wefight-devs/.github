@@ -1,10 +1,10 @@
-name: Reusable on push master workflow for python projects
+name: Reusable tests with docker-compose workflow
 
 on: workflow_call
 
 
 jobs:
-  sonarcloud:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
