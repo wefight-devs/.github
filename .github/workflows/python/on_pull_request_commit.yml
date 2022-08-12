@@ -1,0 +1,49 @@
+name: Reusable on pull request commit workflow for python projects
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: "Run docker compose tests"
+        env:
+          AZURE_TOKEN: ${{ secrets.AZURE_TOKEN }}
+          PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+        run: docker-compose --file docker-compose.tests.yml up --build --abort-on-container-exit
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
+  code-style-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: "Set up python and pip"
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: "Install black"
+        run: |
+          pip install --upgrade pip
+          pip install black
+
+      - name: "Black linter check"
+        run: |
+          black --check .
+
+  semantic-release:
+    uses: wefight-devs/.github/.github/workflows/semantic-release.yml@v1.0.7
+    with:
+      dryRun: true
+      teamsGroup: DATA
+    secrets: inherit
