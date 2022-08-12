@@ -1,5 +1,8 @@
 name: Reusable on pull request commit workflow for python projects
 
+on: workflow_call
+
+
 jobs:
   test:
     runs-on: ubuntu-latest
