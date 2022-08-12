@@ -1,5 +1,8 @@
 name: Reusable on push master workflow for python projects
 
+on: workflow_call
+
+
 jobs:
   sonarcloud:
     runs-on: ubuntu-latest
