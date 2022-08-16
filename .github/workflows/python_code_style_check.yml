@@ -1,6 +1,13 @@
 name: Reusable python code style check workflow
 
-on: workflow_call
+on:
+  workflow_call:
+    inputs:
+      workDir:
+        description: 'The source root directory of the project'
+        required: false
+        type: string
+        default: .
 
 jobs:
   code-style-check:
