@@ -23,13 +23,10 @@ jobs:
         with:
           python-version: ${{ inputs.pythonVersion }}
 
-      - name: "Install poetry and packages"
+      - name: "Install poetry and package library"
         run: |
           pip install --upgrade pip
           pip install poetry
-
-      - name: "Package library"
-        run: |
           poetry build
 
       - name: "Publish library"
