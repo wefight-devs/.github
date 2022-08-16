@@ -19,6 +19,12 @@ on:
         type: string
         description: "NodeJS Cache: npm, yarn or pnpm)"
 
+      workDir:
+        description: 'The source root directory of the project'
+        required: false
+        type: string
+        default: .
+
       shouldChmod777GenerateNotes:
         required: false
         type: boolean
@@ -28,6 +34,9 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.workDir }}
     env:
       PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
       ARTIFACT_TOKEN: ${{ secrets.ARTIFACT_TOKEN }}
@@ -56,10 +65,7 @@ jobs:
         run: |
           npm install semantic-release @semantic-release/exec @semantic-release/git @semantic-release/changelog semantic-release-ms-teams
 
-      - name: where-am-i
-        run: echo "$PWD"
-
-      # Generate semver 
+      # Generate semver
       - name: Semantic Release dry run
         if: inputs.dryRun == true
         env:
