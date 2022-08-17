@@ -70,10 +70,14 @@ jobs:
         if: inputs.dryRun == true
         env:
           TEAMS_WEBHOOK_URL: ${{ secrets[env.TEAMS_WEBHOOK_SECRET_KEY] }}
-        run: GITHUB_EVENT_NAME="push" GITHUB_REF="main" npx semantic-release --dry-run
+        run: |
+        cd ${{ inputs.workDir }}
+        GITHUB_EVENT_NAME="push" GITHUB_REF="main" npx semantic-release --dry-run
 
       - name: Semantic Release
         if: inputs.dryRun == false
         env:
           TEAMS_WEBHOOK_URL: ${{ secrets[env.TEAMS_WEBHOOK_SECRET_KEY] }}
-        run: GITHUB_EVENT_NAME="push" npx semantic-release
+        run: |
+        cd ${{ inputs.workDir }}
+        GITHUB_EVENT_NAME="push" npx semantic-release
