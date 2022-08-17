@@ -60,7 +60,7 @@ jobs:
         env:
           TEAMS_WEBHOOK_URL: ${{ secrets[env.TEAMS_WEBHOOK_SECRET_KEY] }}
         run: |
-        cd ${{ inputs.workDir }}
+        echo "$PWD"
         GITHUB_EVENT_NAME="push" GITHUB_REF="main" npx semantic-release --dry-run
 
       - name: Semantic Release
@@ -68,5 +68,5 @@ jobs:
         env:
           TEAMS_WEBHOOK_URL: ${{ secrets[env.TEAMS_WEBHOOK_SECRET_KEY] }}
         run: |
-        cd ${{ inputs.workDir }}
+        echo "$PWD"
         GITHUB_EVENT_NAME="push" npx semantic-release
