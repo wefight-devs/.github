@@ -12,6 +12,11 @@ inputs:
     description: "Working directory to get"
     default: "."
 
+  skip_terrascan:
+    required: false
+    description: "True if should skip terrascan"
+    default: "false"
+
 runs:
   using: "composite"
   steps:
@@ -48,6 +53,7 @@ runs:
     - name: Run terrascan
       id: terrascan
       shell: bash
+      if: inputs.skip_terrascan == 'false'
       working-directory: main/${{ inputs.working-directory }}
       run: |
         curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
