@@ -19,6 +19,12 @@ on:
         type: string
         description: "NodeJS Cache: npm, yarn or pnpm)"
 
+      shouldChmod777GenerateNotes:
+        required: false
+        type: boolean
+        description: "Should chmod 777 generate_notes.sh"
+        default: false
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -34,6 +40,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
+
+      - name: chmod generate_notes.sh
+        if : ${{inputs.shouldChmod777GenerateNotes}}
+        run: chmod 777 ./scripts/generate_notes.sh
 
       - uses: actions/setup-node@v3
         with:
