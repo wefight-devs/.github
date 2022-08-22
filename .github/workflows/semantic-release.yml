@@ -19,6 +19,12 @@ on:
         type: string
         description: "NodeJS Cache: npm, yarn or pnpm)"
 
+      workDir:
+        description: 'The source root directory of the project'
+        required: false
+        type: string
+        default: .
+
       shouldChmod777GenerateNotes:
         required: false
         type: boolean
@@ -55,9 +61,6 @@ jobs:
       - name: npm install semantic-release
         run: |
           npm install semantic-release @semantic-release/exec @semantic-release/git @semantic-release/changelog semantic-release-ms-teams
-
-      - name: where-am-i
-        run: echo "$PWD"
 
       # Generate semver 
       - name: Semantic Release dry run
