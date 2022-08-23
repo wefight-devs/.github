@@ -9,10 +9,18 @@ on:
         default: '3.10'
         type: string
 
+      workDir:
+        description: 'The source root directory of the project'
+        required: false
+        type: string
+        default: .
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.workDir }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -35,6 +43,8 @@ jobs:
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarqube-scan-action@master
+        with:
+          projectBaseDir: ${{ inputs.workDir }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
