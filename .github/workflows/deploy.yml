@@ -1,3 +1,8 @@
+#
+# Deploy image with "beta" tag and semver tag on development and staging
+# Then, deploy then image with "master" or "main" tag (depends on your default branch) on production
+#
+
 name: Reusable deploy workflow for development, staging and production
 
 on:
@@ -12,7 +17,7 @@ on:
         description: 'An image name passed from the caller workflow'
         required: true
         type: string
-      
+
       loginServer:
         required: false
         type: string
