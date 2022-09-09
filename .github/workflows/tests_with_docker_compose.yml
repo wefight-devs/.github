@@ -9,6 +9,12 @@ on:
         description: Docker file name
         default: docker-compose.tests.yml
 
+      skipSonar:
+        type: boolean
+        required: false
+        default: false
+        description: Skip sonarcloud step
+
 #
 # If you wan't to use specific environment variable on your tests,
 # please copy this workflow on your project instead of using it
@@ -36,17 +42,23 @@ jobs:
           fetch-depth: 0
 
       - name: "Run docker compose tests"
-        env:
-          AZURE_TOKEN: ${{ secrets.AZURE_TOKEN }}
-          PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
         run: docker-compose --file ${{ inputs.fileName }} up --build --abort-on-container-exit
 
       - name: SonarCloud Scan
+        if: inputs.skipSonar == false
         uses: sonarsource/sonarqube-scan-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+
+      - name: Archive code coverage results
+        if: inputs.skipSonar == true
+        uses: actions/upload-artifact@v3
+        with:
+          name: reports-e2e
+          path: reports-e2e
+          retention-days: 1
 
       - name: Stop containers
         if: always()
