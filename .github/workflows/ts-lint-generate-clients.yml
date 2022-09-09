@@ -1,0 +1,83 @@
+name: Lint and dry-run client generation for TS API
+
+on:
+  workflow_call:
+
+env:
+  ARTIFACT_TOKEN: ${{ secrets.ARTIFACT_TOKEN }}
+  PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+  TEAMS_WEBHOOK_URL: ${{ secrets.API_TEAMS_WEBHOOK_URL }}
+  HUSKY: 0
+
+jobs:
+  lint:
+    name: "Run lint"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install node 14.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.x
+      - name: "unit tests"
+        run: |
+          npm install &&
+          npm run lint:test
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3
+        with:
+          name: reports
+          path: reports
+          if-no-files-found: error
+          retention-days: 1
+
+  dry-release:
+    name: Dry Semantic Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          cache: ${{ inputs.cache }}
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@wefight-devs'
+
+      - name: npm install semantic-release
+        run: |
+          npm install semantic-release @semantic-release/exec @semantic-release/git @semantic-release/github @semantic-release/changelog semantic-release-ms-teams
+
+      - name: "dry release"
+        run: |
+          HUSKY=0 GITHUB_EVENT_NAME="push" GITHUB_REF="${{ github.event.repository.default_branch }}" npm run release:dry
+
+  dry-generate-clients:
+    name: Dry generate typescript client
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install node 14.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.x
+
+      - name: "npm install"
+        run: npm i
+
+      - name: "generate clients & build"
+        env:
+          ENCRYPTION_SECRET: ${{ secrets.ENCRYPTION_SECRET }}
+        run: |
+          CI=true npm run generate:client &&
+          npm run build
+
+      - name: "prepare typescript client"
+        run: |
+          cd clientDist/typescript &&
+          npm install &&
+          npm run build

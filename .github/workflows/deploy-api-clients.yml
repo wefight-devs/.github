@@ -1,0 +1,73 @@
+name: Deploy API clients for npm and python
+
+on:
+  workflow_call:
+
+env:
+  ARTIFACT_TOKEN: ${{ secrets.ARTIFACT_TOKEN }}
+  PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  deploy-packages:
+    name: Deploy on Github Packages
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install node 14.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.x
+
+      - name: "Generate clients"
+        run: |
+          npm install &&
+          CI=true npm run generate:client
+        env:
+          ENCRYPTION_SECRET: ${{ secrets.ENCRYPTION_SECRET }}
+
+      - name: "Prepare typescript client"
+        run: |
+          cd clientDist/typescript &&
+          npm install &&
+          npm run build
+
+      - name: npm publish
+        run: npm publish clientDist/typescript
+
+      - name: Setup Python
+        uses: actions/setup-python@v4.2.0
+        with:
+          python-version: 3.9
+
+      - name: "Pip install"
+        run: |
+          cd clientDist/python
+          pip install --upgrade pip
+          pip install wheel twine keyring artifacts-keyring
+
+      - name: "setup.py Compile"
+        run: |
+          cd clientDist/python
+          python setup.py bdist_wheel
+
+      - name: "Create .pypirc"
+        run: |
+          touch ~/.pypirc
+          echo "[distutils]
+          Index-servers =
+            Wefight
+
+          [Wefight]
+          repository = https://pkgs.dev.azure.com/vikwefight/_packaging/Wefight/pypi/upload
+          username = nicolas.laporte@wefight.co
+          password = ${{ secrets.PACKAGES_AZURE_TOKEN }}" >> ~/.pypirc
+
+      - name: "Twine upload"
+        run: |
+          cd clientDist/python
+          python -m twine upload --skip-existing --verbose -r Wefight --config-file ~/.pypirc dist/*.whl
