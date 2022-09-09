@@ -1,28 +1,24 @@
 #
-# Deploy image with "beta" tag and semver tag on development and staging
-# Then, deploy then image with "master" or "main" tag (depends on your default branch) on production
+# Build and publish image to ACR with semver tag
+# Then, on development environment, build and publish image to ACR with "beta" tag (for kubernetes-resources), and ask kubernetes-resources-v2 to deploy on development
+# On staging environment, only ask kubernetes-resources-v2 to deploy on stage
+# On production environment, build and publish image to ACR with "master" or "main" tag (for kubernetes-resources), and ask kubernetes-resources-v2 to deploy on fr/uae production
 #
 
-name: Reusable deploy workflow for development, staging and production
+name: Build and deploy image
 
 on:
   workflow_call:
     inputs:
-      semverTagName:
-        description: 'A tag name passed from the caller workflow'
-        required: true
-        type: string
-
       imageName:
         description: 'An image name passed from the caller workflow'
         required: true
         type: string
 
-      loginServer:
-        required: false
+      semverTagName:
+        description: 'A tag name passed from the caller workflow'
+        required: true
         type: string
-        description: "Login server"
-        default: wefight2.azurecr.io
 
       buildTarget:
         required: false
@@ -30,36 +26,23 @@ on:
         description: "Build target"
         default: prod
 
+      kubernetesResourcesPath:
+        required: false
+        type: string
+        default: .vik-app.image
+        description: Custom kubernetes-resources-v2 image path to update
+
 env:
-  IMAGE_REF: ${{ inputs.loginServer }}/${{ inputs.imageName }}:${{ inputs.semverTagName }}
-  IMAGE_NAME: ${{ inputs.imageName }}
-  IMAGE_TAG: ${{ inputs.semverTagName }}
-  ACR_LOGIN_SERVER: ${{ inputs.loginServer }}
-  DOCKER_BUILD_TARGET: ${{ inputs.buildTarget }}
+  ACR_LOGIN_SERVER: wefight2.azurecr.io
+  IMAGE_REF: ${{ env.ACR_LOGIN_SERVER }}/${{ inputs.imageName }}:${{ inputs.semverTagName }}
 
 jobs:
-  deploy:
+  build-publish:
+    name: Build and publish docker image to ACR
     runs-on: ubuntu-latest
-    # For each environments
-    strategy:
-      matrix:
-        include:
-          - environment: development
-          - environment: staging
-          - environment: production
-
-    environment: ${{ matrix.environment }}
-
     steps:
-      # Checkout custom deploy actions
       - uses: actions/checkout@v3
-        with:
-          repository: 'wefight-devs/.github'
-          fetch-depth: 0
-          path: 'common-actions'
-          ref: v1.0.7
 
-      # Login to ACR
       - name: "Azure ACR login"
         uses: azure/docker-login@v1
         with:
@@ -67,11 +50,80 @@ jobs:
           username: ${{ secrets.ACR_REGISTRY_USERNAME }}
           password: ${{ secrets.ACR_REGISTRY_PASSWORD }}
 
-      # Run custom action for environment
-      - name: "Deploy to environment"
-        uses: "./common-actions/.github/actions/deploy"
+      - name: Build development
+        run: |
+          docker build \
+          -t ${{ env.IMAGE_REF }} \
+          --build-arg ARTIFACT_TOKEN=${{ secrets.ARTIFACT_TOKEN }} \
+          --build-arg PACKAGES_GITHUB_TOKEN=${{ secrets.PACKAGES_GITHUB_TOKEN }} \
+          --build-arg AZURE_TOKEN=${{ secrets.AZURE_TOKEN }} \
+          --platform=linux/amd64 \
+          --target=${{ inputs.buildTarget }} \
+          .
+
+      - name: Publish
+        run: docker push ${{ env.IMAGE_REF }}
+
+  deploy-dev:
+    needs: build-publish
+    runs-on: ubuntu-latest
+    name: Deploy image to development
+    environment: development
+
+    steps:
+      - name: "Azure ACR login (for kubernetes-resources)"
+        uses: azure/docker-login@v1
         with:
-          environment: ${{ matrix.environment }}
-          ARTIFACT_TOKEN: ${{ secrets.ARTIFACT_TOKEN }}
-          PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
-          AZURE_TOKEN: ${{ secrets.AZURE_TOKEN }}
+          login-server: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_REGISTRY_USERNAME }}
+          password: ${{ secrets.ACR_REGISTRY_PASSWORD }}
+
+      - name: Build and push beta (for kubernetes-resources)
+        run: |
+          docker pull ${{ env.IMAGE_REF }}
+          docker tag ${{ env.IMAGE_REF }} ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:beta
+          docker push ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:beta
+
+      - name: 'Notify kubernetes-resources-v2'
+        run: |
+          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ inputs.imageName }}","imageSemver":"${{ inputs.semverTagName }}", "environment": "dev", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
+
+  deploy-stage:
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    name: Deploy image to stage
+    environment: stage
+
+    steps:
+      - name: 'Notify kubernetes-resources-v2'
+        run: |
+          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ inputs.imageName }}","imageSemver":"${{ inputs.semverTagName }}", "environment": "stage", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
+
+  deploy-prod:
+    needs: deploy-stage
+    runs-on: ubuntu-latest
+    name: Deploy image to production
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: "Azure ACR login (for kubernetes-resources)"
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_REGISTRY_USERNAME }}
+          password: ${{ secrets.ACR_REGISTRY_PASSWORD }}
+
+      - name: Build and push master (for kubernetes-resources)
+        run: |
+          docker pull ${{ env.IMAGE_REF }}
+
+          defaultBranch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
+          docker tag ${{ env.IMAGE_REF }} ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:$defaultBranch
+          docker push ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:$defaultBranch
+
+      - name: 'Notify kubernetes-resources-v2'
+        run: |
+          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ inputs.imageName }}","imageSemver":"${{ inputs.semverTagName }}", "environment": "prod-fr", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
+          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ inputs.imageName }}","imageSemver":"${{ inputs.semverTagName }}", "environment": "prod-uae", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
