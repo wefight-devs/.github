@@ -34,7 +34,7 @@ on:
 
 env:
   ACR_LOGIN_SERVER: wefight2.azurecr.io
-  IMAGE_REF: ${{ env.ACR_LOGIN_SERVER }}/${{ inputs.imageName }}:${{ inputs.semverTagName }}
+  IMAGE_REF: wefight2.azurecr.io/${{ inputs.imageName }}:${{ inputs.semverTagName }}
 
 jobs:
   build-publish:
