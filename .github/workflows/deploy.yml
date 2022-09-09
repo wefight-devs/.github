@@ -94,7 +94,7 @@ jobs:
     needs: deploy-dev
     runs-on: ubuntu-latest
     name: Deploy image to stage
-    environment: stage
+    environment: staging
 
     steps:
       - name: 'Notify kubernetes-resources-v2'
