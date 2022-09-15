@@ -13,6 +13,8 @@ For example, if your `.releaserc.json` use the `@semantic-release/npm` plugin, t
 | teamsGroup | Group for TEAMS notification | true     | /       |
 | dryRun     | Should run on dry-run mode   | false    | false   |
 | cache      | "NodeJS Cache"               | false    | ''      |
+| shouldChmod777GenerateNotes | Should chmod 777 generate_notes.sh | false | false |
+| workDir | The source root directory of the project | false | '.' |
 
 ### deploy.yml
 
@@ -26,12 +28,15 @@ It build your `Dockerfile`:
 - on specific target
 
 Once the container built, the workflow push it to the Azure ACR, and push a copy with the tag “beta”.
+Then he notify the repository wefight-devs/kubernetes-resources-v2 that new tag of your image is available for dev and stage.
+If your application is defined into kubernetes-resources-v2, it will be deployed to dev and stage. If not, @wefight-devs/kubernetes-resources deploy the "beta" tag on dev and stage.
 
-When the image is ready for production, this workflow only push a new image with tag “master” or “main” (depending on your main branch).
+When the image is ready for production, this workflow push a new image with tag “master” or “main” (depending on your main branch), and notify wefight-devs/kubernetes-resources-v2 that new tag of your image is available for production.
+
 
 | Input         | Description                     | Required | Default               |
 | ------------- | ------------------------------- | -------- | --------------------- |
 | imageName     | Image name for your container   | true     | /                     |
 | semverTagName | Tag name for your container     | true     | /                     |
-| loginServer   | Azure ACR login server          | false    | 'wefight2.azurecr.io' |
+| kubernetesResourcesPath   |  Custom kubernetes-resources-v2 image path to update          | false    | '.vik-app.image' |
 | buildTarget   | Build target of your Dockerfile | false    | 'prod'                |
