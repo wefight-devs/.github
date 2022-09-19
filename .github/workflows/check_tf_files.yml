@@ -1,0 +1,131 @@
+name: Reusable Terraform check workflow
+
+on:
+  workflow_call:
+    inputs:
+      terraform_version:
+        type: string
+        required: false
+        description: "Set terraform version"
+        default: 1.2.5
+      
+      workspace:
+        type: string
+        required: false
+        description: "Terraform workspace for plan"
+        default: vik-dev_fr
+      
+      working-directory:
+        type: string
+        required: false
+        description: "Working directory to test"
+        default: "."
+
+jobs:
+  # First job, terraform fmt check and TFSec
+  check_format_tfsec:
+    name: Check format and TFSec
+    runs-on: ubuntu-latest
+    steps:
+      # Clone the caller repository on the "main" folder
+      - name: Clone repo
+        uses: actions/checkout@v3
+        with:
+          path: main
+      
+      # Setup terraform with specific version (1.2.5 by default)
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ inputs.terraform_version }}
+      
+      # Run terraform fmt check
+      - name: Run terraform fmt check
+        working-directory: main/${{ inputs.working-directory }}
+        run: terraform fmt -check -diff
+
+      # Run TFSec
+      - name: Run TFSec
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: main/${{ inputs.working-directory }}
+
+  # Second job: checkov and terrascan
+  checkov_terrascan:
+    name: Run checkov and terrascan
+    needs: check_format_tfsec
+    runs-on: ubuntu-latest
+    env:
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+    steps:
+      # Clone the caller repository on the "main" folder
+      - name: Clone repo
+        uses: actions/checkout@v3
+        with:
+          path: main
+
+      # Setup terraform with specific version (1.2.5 by default)
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ inputs.terraform_version }}
+
+      # Add SSH private key to the runner (stored on Keeper)
+      - name: Add SSH key
+        run: |
+            mkdir -p /home/runner/.ssh
+            cat <<EOT >> /home/runner/.ssh/github_actions
+            ${{ secrets.TERRAFORM_GITHUB_SSH_KEY }}
+            EOT
+            chmod 600 /home/runner/.ssh/github_actions
+            ssh-agent -a $SSH_AUTH_SOCK > /dev/null   
+            ssh-add /home/runner/.ssh/github_actions
+
+      # Login to Azure with the service principal "GitHub Enterprise Cloud - Enterprise Account"
+      - name: Login to Azure
+        uses: Azure/login@v1
+        with:
+          creds: '{"clientId":"${{ env.ARM_CLIENT_ID }}","clientSecret":"${{ env.ARM_CLIENT_SECRET }}","subscriptionId":"${{ env.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ env.ARM_TENANT_ID }}"}'
+      
+      # Terraform init
+      - name: Terraform init
+        working-directory: main/${{ inputs.working-directory }}
+        run: terraform init
+
+      # Terraform plan and store result on a tfplan.json file
+      - name: Terraform plan
+        working-directory: main/${{ inputs.working-directory }}
+        run: |
+          terraform workspace select ${{ inputs.workspace }}
+          terraform plan \
+            --var-file ./platforms/common.tfvars \
+            --var-file ./platforms/${{ inputs.workspace }}/terraform.tfvars \
+            --lock-timeout 5m \
+            --out tfplan.binary
+          terraform show -json tfplan.binary > tfplan.json
+         
+      # Terrascan the tfplan.json
+      - name: Run terrascan
+        working-directory: main/${{ inputs.working-directory }}
+        run: |
+          docker run -v `tfplan.json`:`tfplan.json` -w `pwd` tenable/terrascan scan -i tfplan -f tfplan.json . 
+          # curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
+          # tar -xf terrascan.tar.gz terrascan && rm terrascan.tar.gz
+          # install terrascan /usr/local/bin && rm terrascan
+          # terrascan scan -i tfplan -f tfplan.json
+
+      # Checkov the tfplan.json file
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          file: main/${{ inputs.working-directory }}/tfplan.json 
+          quiet: true 
+          soft_fail: false 
+          framework: terraform 
+          output_format: github_failed_only 
+          download_external_modules: true 
