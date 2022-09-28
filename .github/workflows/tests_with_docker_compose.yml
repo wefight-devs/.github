@@ -1,7 +1,31 @@
 name: Reusable tests with docker-compose workflow
 
-on: workflow_call
+on:
+  workflow_call:
+    inputs:
+      fileName:
+        type: string
+        required: false
+        description: Docker file name
+        default: docker-compose.tests.yml
 
+#
+# If you wan't to use specific environment variable on your tests,
+# please copy this workflow on your project instead of using it
+#
+env:
+  TEST_AUTH0_CLIENT_ID: ${{ secrets.TEST_AUTH0_CLIENT_ID }}
+  TEST_AUTH0_CLIENT_SECRET_USER: ${{ secrets.TEST_AUTH0_CLIENT_SECRET }}
+  ARTIFACT_TOKEN: ${{ secrets.ARTIFACT_TOKEN }}
+  AZURE_TOKEN: ${{ secrets.AZURE_TOKEN }}
+  PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+  AUTH_API_URL: ${{ secrets.AUTH_API_URL }}
+  ENCRYPTION_SECRET: ${{ secrets.ENCRYPTION_SECRET }}
+  # Legacy:
+  AUTH0_CLIENT_ID_USER: ${{ secrets.AUTH0_CLIENT_ID_USER }}
+  AUTH0_CLIENT_SECRET_USER: ${{ secrets.AUTH0_CLIENT_SECRET_USER }}
+  CLIENT_ID: ${{ secrets.TEST_AUTH0_CLIENT_ID }}
+  CLIENT_SECRET: ${{ secrets.TEST_AUTH0_CLIENT_SECRET }}
 
 jobs:
   test:
@@ -15,7 +39,7 @@ jobs:
         env:
           AZURE_TOKEN: ${{ secrets.AZURE_TOKEN }}
           PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
-        run: docker-compose --file docker-compose.tests.yml up --build --abort-on-container-exit
+        run: docker-compose --file ${{ inputs.fileName }} up --build --abort-on-container-exit
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarqube-scan-action@master
@@ -23,3 +47,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+
+      - name: Stop containers
+        if: always()
+        run: docker-compose -f ${{ inputs.fileName }} down
