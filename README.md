@@ -26,6 +26,7 @@ It build your `Dockerfile`:
 - on platform linux/amd64
 - with args ARTIFACT_TOKEN (for Azure npm registry), PACKAGES_GITHUB_TOKEN (for Github npm registry) and AZURE_TOKEN (for python). Each of these variables are set on the organization secrets, so you don't need to set them on your repository secrets.
 - on specific target
+- from specific Dockerfile
 
 Once the container built, the workflow push it to the Azure ACR, and push a copy with the tag “beta”.
 Then he notify the repository wefight-devs/kubernetes-resources-v2 that new tag of your image is available for dev and stage.
@@ -39,3 +40,4 @@ When the image is ready for production, this workflow push a new image with tag 
 | semverTagName           | Tag name for your container                         | true     | /                |
 | kubernetesResourcesPath | Custom kubernetes-resources-v2 image path to update | false    | '.vik-app.image' |
 | buildTarget             | Build target of your Dockerfile                     | false    | 'prod'           |
+| dockerFilePath          | Path where Dockerfile is                            | false    | '.'              |
