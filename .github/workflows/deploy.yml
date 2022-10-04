@@ -38,12 +38,6 @@ on:
         default: "."
         description: Path where Dockerfile is
 
-      buildDist:
-        required: false
-        type: boolean
-        default: false
-        description: Specify if need to build dist before buid Dockerfile
-
 env:
   ACR_LOGIN_SERVER: wefight2.azurecr.io
   IMAGE_NAME: ${{ inputs.imageName }}
@@ -63,20 +57,6 @@ jobs:
           login-server: ${{ env.ACR_LOGIN_SERVER }}
           username: ${{ secrets.ACR_REGISTRY_USERNAME }}
           password: ${{ secrets.ACR_REGISTRY_PASSWORD }}
-
-
-      - if: inputs.buildDist == true
-        uses: actions/setup-node@v3
-        with:
-          node-version: '14'
-          cache: ${{ inputs.cache }}
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@wefight-devs'
-
-      - if: inputs.buildDist == true
-        run: |
-          npm install
-          ./scripts/build.sh
 
       - name: Build
         run: |
