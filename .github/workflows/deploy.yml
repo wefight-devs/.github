@@ -38,11 +38,11 @@ on:
         default: "."
         description: Path where Dockerfile is
 
-      skipBuild:
+      buildDist:
         required: false
         type: boolean
         default: false
-        description: Specify if no need to build and push image
+        description: Specify if need to build dist before buid Dockerfile
 
 env:
   ACR_LOGIN_SERVER: wefight2.azurecr.io
@@ -56,18 +56,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        if: inputs.skipBuild == false
 
       - name: "Azure ACR login"
-        if: inputs.skipBuild == false
         uses: azure/docker-login@v1
         with:
           login-server: ${{ env.ACR_LOGIN_SERVER }}
           username: ${{ secrets.ACR_REGISTRY_USERNAME }}
           password: ${{ secrets.ACR_REGISTRY_PASSWORD }}
 
+
+      - if: inputs.buildDist == true
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          cache: ${{ inputs.cache }}
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@wefight-devs'
+
+      - if: inputs.buildDist == true
+        run: |
+          npm install
+          ./scripts/build.sh
+
       - name: Build
-        if: inputs.skipBuild == false
         run: |
           docker build \
           -t ${{ env.IMAGE_REF }} \
@@ -79,7 +90,6 @@ jobs:
           ${{ inputs.dockerFilePath }}
 
       - name: Publish
-        if: inputs.skipBuild == false
         run: docker push ${{ env.IMAGE_REF }}
 
   deploy-dev:
