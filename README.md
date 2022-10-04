@@ -34,10 +34,11 @@ If your application is defined into kubernetes-resources-v2, it will be deployed
 
 When the image is ready for production, this workflow push a new image with tag “master” or “main” (depending on your main branch), and notify wefight-devs/kubernetes-resources-v2 that new tag of your image is available for production.
 
-| Input                   | Description                                         | Required | Default          |
-| ----------------------- | --------------------------------------------------- | -------- | ---------------- |
-| imageName               | Image name for your container                       | true     | /                |
-| semverTagName           | Tag name for your container                         | true     | /                |
-| kubernetesResourcesPath | Custom kubernetes-resources-v2 image path to update | false    | '.vik-app.image' |
-| buildTarget             | Build target of your Dockerfile                     | false    | 'prod'           |
-| dockerFilePath          | Path where Dockerfile is                            | false    | '.'              |
+| Input                   | Description                                          | Required | Default          |
+| ----------------------- | ---------------------------------------------------- | -------- | ---------------- |
+| imageName               | Image name for your container                        | true     | /                |
+| semverTagName           | Tag name for your container                          | true     | /                |
+| kubernetesResourcesPath | Custom kubernetes-resources-v2 image path to update  | false    | '.vik-app.image' |
+| buildTarget             | Build target of your Dockerfile                      | false    | 'prod'           |
+| dockerFilePath          | Path where Dockerfile is                             | false    | '.'              |
+| buildDist               | Specify if need to build dist before buid Dockerfile | false    | false            |
