@@ -63,7 +63,7 @@ jobs:
 
       - name: npm install semantic-release
         run: |
-          npm install semantic-release @semantic-release/exec @semantic-release/git @semantic-release/github @semantic-release/changelog semantic-release-ms-teams
+          npm install semantic-release @semantic-release/exec @semantic-release/git @semantic-release/github @semantic-release/changelog semantic-release-ms-teams@^1.2.1
 
       # Generate semver 
       - name: Semantic Release dry run
