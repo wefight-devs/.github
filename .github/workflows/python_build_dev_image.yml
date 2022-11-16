@@ -1,0 +1,72 @@
+name: Reusable workflow for building development image for python projects
+
+on:
+  workflow_call:
+    inputs:
+      pythonVersion:
+        description: 'The version of python of the project'
+        required: false
+        default: '3.10'
+        type: string
+
+      imageName:
+        description: 'An image name passed from the caller workflow'
+        required: true
+        type: string
+
+
+jobs:
+  build_dev_image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+
+      - name: "Setup python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.pythonVersion }}
+
+      - name: "Install Poetry"
+        env:
+          AZURE_TOKEN: ${{ secrets.AZURE_TOKEN }}
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 - && \
+          export PATH="/root/.local/bin:$PATH" && \
+          poetry config repositories.wefight https://pkgs.dev.azure.com/vikwefight/_packaging/Wefight/pypi/simple/ && \
+          poetry config http-basic.wefight $AZURE_TOKEN $AZURE_TOKEN
+
+      - name: "Poetry lock"
+        run: |
+          poetry lock
+
+      - name: "Commit new lock file"
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "ci: Update lock file"
+          commit_user_name: "Lock BOT"
+          commit_user_email: "team_data@wefight.co"
+          file_pattern: poetry.lock
+
+      - name: "Azure ACR login"
+        uses: azure/docker-login@v1
+        with:
+          login-server: "wefight2.azurecr.io"
+          username: ${{ secrets.ACR_REGISTRY_USERNAME }}
+          password: ${{ secrets.ACR_REGISTRY_PASSWORD }}
+
+      - name: "Build development"
+        shell: bash
+        run: |
+          docker build \
+          -t wefight2.azurecr.io/${{ inputs.imageName }}:local \
+          --build-arg AZURE_TOKEN=${{ secrets.AZURE_TOKEN }} \
+          --build-arg STAGE=dev \
+          --platform=linux/amd64 \
+          --target=main \
+          .
+
+      - name: "Push image"
+        shell: bash
+        run: |
+          docker push wefight2.azurecr.io/${{ inputs.imageName }}:local
