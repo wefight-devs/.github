@@ -64,7 +64,7 @@ jobs:
 
           [Wefight]
           repository = https://pkgs.dev.azure.com/vikwefight/_packaging/Wefight/pypi/upload
-          username = nicolas.laporte@wefight.co
+          username = admin@wefight.co
           password = ${{ secrets.PACKAGES_AZURE_TOKEN }}" >> ~/.pypirc
 
       - name: "Twine upload"
