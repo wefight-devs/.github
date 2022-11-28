@@ -31,6 +31,12 @@ on:
         type: string
         default: .
 
+      currentBranch: # Set to `currentBranch: ${{ github.head_ref }}` in your commit check workflow for dry runs
+        description: 'The principal branch of the project'
+        required: false
+        type: string
+        default: main
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -71,7 +77,7 @@ jobs:
         if: inputs.dryRun == true
         env:
           TEAMS_WEBHOOK_URL: ${{ secrets[env.TEAMS_WEBHOOK_SECRET_KEY] }}
-        run: GITHUB_EVENT_NAME="push" GITHUB_REF="main" npx semantic-release --dry-run
+        run: GITHUB_EVENT_NAME="push" GITHUB_REF=${{inputs.currentBranch}} npx semantic-release --dry-run --branches ${{inputs.currentBranch}}
 
       - name: Semantic Release
         if: inputs.dryRun == false
