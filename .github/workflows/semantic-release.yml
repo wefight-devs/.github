@@ -32,7 +32,7 @@ on:
         default: .
 
       currentBranch: # Set to `currentBranch: ${{ github.head_ref }}` in your commit check workflow for dry runs
-        description: 'The principal branch of the project'
+        description: 'The working branch of the project'
         required: false
         type: string
         default: main
