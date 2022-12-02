@@ -44,18 +44,6 @@ on:
         default: false
         description: Enable helm hook
 
-      helmHookServicePath:
-        required: false
-        type: string
-        default: ""
-        description: Path to service in k8r2
-
-      helmHookPresent:
-        required: false
-        type: boolean
-        default: false
-        description: Is helm hook present in k8r2
-
       helmHookResourcesPath:
         required: false
         type: string
@@ -117,15 +105,9 @@ jobs:
           docker tag ${{ env.IMAGE_REF }} ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:beta
           docker push ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:beta
 
-      - name: "Notify kubernetes-resources-v2 with helm hook"
-        if: ${{ inputs.helmHookResourcesPath != ""}}
-        run: |
-          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch_with_hook.yaml/dispatches -d '{"ref":"main","inputs":{"enableHook":  "${{ inputs.enableHook }}", "servicePath": "${{ inputs.helmHookServicePath}}", "imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "dev", "helmHookResourcesPath": "${{ inputs.helmHookResourcesPath }}", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
-
       - name: 'Notify kubernetes-resources-v2'
-        if: ${{ inputs.helmHookResourcesPath == ""}}
         run: |
-          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "dev", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
+          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "dev", "customPath": "${{ inputs.kubernetesResourcesPath }}", {"enableHook":  "${{ inputs.enableHook }}", "helmHookResourcesPath": "${{ inputs.helmHookResourcesPath }}"}}'
 
   deploy-stage:
     needs: deploy-dev
@@ -134,15 +116,9 @@ jobs:
     environment: staging
 
     steps:
-      - name: "Notify kubernetes-resources-v2 with helm hook"
-        if: ${{ inputs.helmHookResourcesPath != ""}}
-        run: |
-          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/manage_helm_hook.yaml/dispatches -d '{"ref":"main","inputs":{"enableHook":  "${{ inputs.enableHook }}", "servicePath": "${{ inputs.helmHookServicePath}}", "imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "stage", "helmHookResourcesPath": "${{ inputs.helmHookResourcesPath }}", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
-
       - name: 'Notify kubernetes-resources-v2'
-        if: ${{ inputs.helmHookResourcesPath == ""}}
         run: |
-          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "stage", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
+          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "stage", "customPath": "${{ inputs.kubernetesResourcesPath }}", {"enableHook":  "${{ inputs.enableHook }}", "helmHookResourcesPath": "${{ inputs.helmHookResourcesPath }}"}}'
 
   deploy-prod:
     needs: deploy-stage
@@ -168,14 +144,7 @@ jobs:
           docker tag ${{ env.IMAGE_REF }} ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:$defaultBranch
           docker push ${{env.ACR_LOGIN_SERVER}}/${{env.IMAGE_NAME}}:$defaultBranch
 
-      - name: "Notify kubernetes-resources-v2 with helm hook"
-        if: ${{ inputs.helmHookResourcesPath != ""}}
-        run: |
-          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/manage_helm_hook.yaml/dispatches -d '{"ref":"main","inputs":{"enableHook":  "${{ inputs.enableHook }}", "servicePath": "${{ inputs.helmHookServicePath}}", "imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "prod-fr", "helmHookResourcesPath": "${{ inputs.helmHookResourcesPath }}", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
-          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/manage_helm_hook.yaml/dispatches -d '{"ref":"main","inputs":{"enableHook":  "${{ inputs.enableHook }}", "servicePath": "${{ inputs.helmHookServicePath}}", "imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "prod-uae", "helmHookResourcesPath": "${{ inputs.helmHookResourcesPath }}", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
-
       - name: 'Notify kubernetes-resources-v2'
-        if: ${{ inputs.helmHookResourcesPath == ""}}
         run: |
-          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "prod-fr", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
-          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "prod-uae", "customPath": "${{ inputs.kubernetesResourcesPath }}"}}'
+          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "prod-fr", "customPath": "${{ inputs.kubernetesResourcesPath }}", {"enableHook":  "${{ inputs.enableHook }}", "helmHookResourcesPath": "${{ inputs.helmHookResourcesPath }}"}}'
+          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.PACKAGES_GITHUB_TOKEN }}" https://api.github.com/repos/wefight-devs/kubernetes-resources-v2/actions/workflows/on_workflow_dispatch.yaml/dispatches -d '{"ref":"main","inputs":{"imageName":"${{ env.IMAGE_NAME }}","imageSemver":"${{ env.IMAGE_TAG }}", "environment": "prod-uae", "customPath": "${{ inputs.kubernetesResourcesPath }}", {"enableHook":  "${{ inputs.enableHook }}", "helmHookResourcesPath": "${{ inputs.helmHookResourcesPath }}"}}'
